@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>星愿计划 ⭐</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部装饰 -->
+        <div class="top-decoration">
+            <div class="cloud cloud-1">☁️</div>
+            <div class="cloud cloud-2">☁️</div>
+            <div class="sun">🌞</div>
+        </div>
+
+        <!-- 模式切换 -->
+        <div class="mode-switcher">
+            <button id="homeMode" class="mode-btn active" onclick="switchMode('home')">
+                <span class="mode-icon">🏠</span>
+                <span class="mode-text">在家</span>
+            </button>
+            <button id="awayMode" class="mode-btn" onclick="switchMode('away')">
+                <span class="mode-icon">✈️</span>
+                <span class="mode-text">在外</span>
+            </button>
+        </div>
+
+        <!-- 星星总数展示 -->
+        <div class="star-display">
+            <div class="star-container">
+                <div class="big-star">⭐</div>
+                <div class="star-count" id="starCount">0</div>
+            </div>
+            <div class="star-label">我的星星</div>
+            <div class="away-stars-hint" id="awayStarsHint">
+                <span class="away-icon">✈️</span>
+                <span id="awayStarsCount">0</span> 颗在外获得
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="action-buttons">
+            <button class="action-btn add-btn" onclick="showAddModal()">
+                <span class="btn-icon">➕</span>
+                <span class="btn-text">获得星星</span>
+            </button>
+            <button class="action-btn remove-btn" onclick="showRemoveModal()">
+                <span class="btn-icon">➖</span>
+                <span class="btn-text">失去星星</span>
+            </button>
+        </div>
+
+        <!-- 功能菜单 -->
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="showHistory()">
+                <span class="menu-icon">📋</span>
+                <span>星星记录</span>
+            </button>
+            <button class="menu-btn sync-btn" id="syncBtn" onclick="showSyncModal()">
+                <span class="menu-icon">✏️</span>
+                <span>同步到黑板</span>
+            </button>
+            <button class="menu-btn" onclick="showSnapshot()">
+                <span class="menu-icon">📸</span>
+                <span>外出快照</span>
+            </button>
+        </div>
+
+        <!-- 底部装饰 -->
+        <div class="bottom-decoration">
+            <div class="grass"></div>
+            <div class="flower flower-1">🌸</div>
+            <div class="flower flower-2">🌼</div>
+            <div class="flower flower-3">🌷</div>
+        </div>
+    </div>
+
+    <!-- 添加星星弹窗 -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🌟 获得星星</h2>
+                <button class="close-btn" onclick="closeModal('addModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-hint">宝贝做到了什么呢？</p>
+                <div class="reason-buttons">
+                    <button class="reason-btn" onclick="addStar('按时吃饭')">
+                        <span class="reason-icon">🍚</span>
+                        <span>按时吃饭</span>
+                    </button>
+                    <button class="reason-btn" onclick="addStar('按时睡觉')">
+                        <span class="reason-icon">😴</span>
+                        <span>按时睡觉</span>
+                    </button>
+                    <button class="reason-btn" onclick="addStar('参加运动')">
+                        <span class="reason-icon">⚽</span>
+                        <span>参加运动</span>
+                    </button>
+                    <button class="reason-btn custom-btn" onclick="showCustomReason('add')">
+                        <span class="reason-icon">✨</span>
+                        <span>其他原因</span>
+                    </button>
+                </div>
+                <div class="custom-input-area" id="addCustomArea" style="display: none;">
+                    <input type="text" id="addCustomReason" placeholder="输入获得星星的原因..." maxlength="50">
+                    <button class="confirm-custom-btn" onclick="addStarCustom()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 减少星星弹窗 -->
+    <div class="modal" id="removeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>😢 失去星星</h2>
+                <button class="close-btn" onclick="closeModal('removeModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-hint">发生了什么呢？</p>
+                <div class="reason-buttons">
+                    <button class="reason-btn remove" onclick="removeStar('没有按时吃饭')">
+                        <span class="reason-icon">🍚</span>
+                        <span>没按时吃饭</span>
+                    </button>
+                    <button class="reason-btn remove" onclick="removeStar('没有按时睡觉')">
+                        <span class="reason-icon">😴</span>
+                        <span>没按时睡觉</span>
+                    </button>
+                    <button class="reason-btn remove" onclick="removeStar('没有参加运动')">
+                        <span class="reason-icon">⚽</span>
+                        <span>没参加运动</span>
+                    </button>
+                    <button class="reason-btn remove custom-btn" onclick="showCustomReason('remove')">
+                        <span class="reason-icon">📝</span>
+                        <span>其他原因</span>
+                    </button>
+                </div>
+                <div class="custom-input-area" id="removeCustomArea" style="display: none;">
+                    <input type="text" id="removeCustomReason" placeholder="输入失去星星的原因..." maxlength="50">
+                    <button class="confirm-custom-btn remove" onclick="removeStarCustom()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 历史记录弹窗 -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content history-modal">
+            <div class="modal-header">
+                <h2>📋 星星记录</h2>
+                <button class="close-btn" onclick="closeModal('historyModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-filter">
+                    <button class="filter-btn active" onclick="filterHistory('all')">全部</button>
+                    <button class="filter-btn" onclick="filterHistory('add')">获得</button>
+                    <button class="filter-btn" onclick="filterHistory('remove')">失去</button>
+                    <button class="filter-btn" onclick="filterHistory('away')">在外</button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <!-- 历史记录将通过JS动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 同步到黑板弹窗 -->
+    <div class="modal" id="syncModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ 同步到黑板</h2>
+                <button class="close-btn" onclick="closeModal('syncModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="sync-info">
+                    <p>在外期间的星星变化：</p>
+                    <div class="sync-stats">
+                        <div class="sync-stat add">
+                            <span class="sync-icon">➕</span>
+                            <span id="syncAddCount">0</span>
+                            <span>颗新获得</span>
+                        </div>
+                        <div class="sync-stat remove">
+                            <span class="sync-icon">➖</span>
+                            <span id="syncRemoveCount">0</span>
+                            <span>颗失去</span>
+                        </div>
+                    </div>
+                    <div class="sync-details" id="syncDetails">
+                        <!-- 同步详情将通过JS动态生成 -->
+                    </div>
+                </div>
+                <p class="sync-hint">确认后，在外的星星将变为正常颜色</p>
+                <button class="sync-confirm-btn" onclick="syncToBlackboard()">
+                    <span>✅</span> 已抄写到黑板
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 外出快照弹窗 -->
+    <div class="modal" id="snapshotModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📸 外出快照</h2>
+                <button class="close-btn" onclick="closeModal('snapshotModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="snapshot-content">
+                    <div class="snapshot-card">
+                        <div class="snapshot-date" id="snapshotDate">2024年1月1日</div>
+                        <div class="snapshot-total">
+                            <span class="snapshot-star">⭐</span>
+                            <span class="snapshot-count" id="snapshotTotal">0</span>
+                            <span class="snapshot-label">颗星星</span>
+                        </div>
+                        <div class="snapshot-month">
+                            <h3>📅 最近30天</h3>
+                            <div class="month-stats">
+                                <div class="month-stat">
+                                    <span class="stat-label">获得</span>
+                                    <span class="stat-value add" id="monthAdd">0</span>
+                                </div>
+                                <div class="month-stat">
+                                    <span class="stat-label">失去</span>
+                                    <span class="stat-value remove" id="monthRemove">0</span>
+                                </div>
+                                <div class="month-stat">
+                                    <span class="stat-label">净增</span>
+                                    <span class="stat-value" id="monthNet">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="recent-records" id="recentRecords">
+                            <!-- 最近记录将通过JS动态生成 -->
+                        </div>
+                    </div>
+                    <button class="snapshot-save-btn" onclick="saveSnapshot()">
+                        <span>📱</span> 保存快照图片
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 星星动画容器 -->
+    <div class="star-animation-container" id="starAnimationContainer"></div>
+
+    <!-- Toast提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
