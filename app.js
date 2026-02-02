@@ -106,12 +106,152 @@ function updateUI() {
     // 更新在外星星数量提示
     const awayStarsCount = getAwayStarsCount();
     const awayHint = document.getElementById('awayStarsHint');
-    document.getElementById('awayStarsCount').textContent = awayStarsCount.net;
-    awayHint.classList.toggle('visible', awayStarsCount.total > 0);
+    document.getElementById('awayStarsCount').textContent = awayStarsCount.added;
+    awayHint.classList.toggle('visible', awayStarsCount.added > 0);
     
     // 更新同步按钮状态
     const syncBtn = document.getElementById('syncBtn');
-    syncBtn.style.display = awayStarsCount.total > 0 ? 'flex' : 'none';
+    const hasUnsyncedAwayRecords = appState.records.some(r => r.mode === 'away' && !r.synced);
+    syncBtn.style.display = hasUnsyncedAwayRecords ? 'flex' : 'none';
+    
+    // 渲染星星黑板
+    renderStarsGrid();
+}
+
+// 渲染星星黑板上的星星
+function renderStarsGrid() {
+    const grid = document.getElementById('starsGrid');
+    const emptyState = document.getElementById('emptyBlackboard');
+    
+    // 获取最近30天的有效星星（计算净值）
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recentRecords = appState.records.filter(r => r.timestamp >= thirtyDaysAgo);
+    
+    // 按时间排序（从旧到新）
+    const sortedRecords = [...recentRecords].sort((a, b) => a.timestamp - b.timestamp);
+    
+    // 计算每颗星星的状态
+    // 使用栈来追踪星星：add 压入，remove 弹出
+    const starStack = [];
+    
+    sortedRecords.forEach(record => {
+        if (record.type === 'add') {
+            starStack.push(record);
+        } else if (record.type === 'remove' && starStack.length > 0) {
+            // 移除最新的一颗星星
+            starStack.pop();
+        }
+    });
+    
+    // 显示/隐藏空状态
+    if (starStack.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.add('visible');
+        return;
+    }
+    
+    emptyState.classList.remove('visible');
+    
+    // 渲染每颗星星
+    grid.innerHTML = starStack.map((record, index) => {
+        // 判断星星类型
+        const isAway = record.mode === 'away';
+        const isSynced = record.synced;
+        
+        let starClass = 'star-item';
+        let starEmoji = '⭐';
+        
+        if (isAway && !isSynced) {
+            starClass += ' away';
+            starEmoji = '🌟'; // 在外获得的用不同的星星
+        } else {
+            starClass += ' home';
+            if (isAway && isSynced) {
+                starClass += ' synced';
+            }
+        }
+        
+        const delay = Math.min(index * 0.05, 1); // 动画延迟，最多1秒
+        
+        return `
+            <span class="${starClass}" 
+                  data-id="${record.id}"
+                  data-reason="${escapeHtml(record.reason)}"
+                  data-time="${formatTime(record.timestamp)}"
+                  data-mode="${record.mode}"
+                  style="animation-delay: ${delay}s"
+                  onclick="showStarDetail(this)">
+                ${starEmoji}
+            </span>
+        `;
+    }).join('');
+}
+
+// 显示星星详情
+function showStarDetail(element) {
+    const reason = element.dataset.reason;
+    const time = element.dataset.time;
+    const mode = element.dataset.mode;
+    
+    // 移除之前的tooltip
+    const oldTooltip = document.querySelector('.star-tooltip');
+    if (oldTooltip) oldTooltip.remove();
+    
+    // 创建tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'star-tooltip';
+    
+    const modeText = mode === 'away' ? ' <span style="color: #FF6B9D;">✈️ 在外</span>' : ' 🏠 在家';
+    tooltip.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">${reason}</div>
+        <div style="font-size: 11px; opacity: 0.8;">${time}${modeText}</div>
+    `;
+    
+    document.body.appendChild(tooltip);
+    
+    // 定位tooltip
+    const rect = element.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    
+    let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+    let top = rect.top - tooltipRect.height - 10;
+    
+    // 确保不超出屏幕
+    if (left < 10) left = 10;
+    if (left + tooltipRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipRect.width - 10;
+    }
+    if (top < 10) {
+        top = rect.bottom + 10;
+        tooltip.style.transform = 'none';
+        tooltip.querySelector('::before')?.remove();
+    }
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        tooltip.remove();
+    }, 3000);
+    
+    // 点击其他地方消失
+    const removeTooltip = (e) => {
+        if (!tooltip.contains(e.target) && e.target !== element) {
+            tooltip.remove();
+            document.removeEventListener('click', removeTooltip);
+        }
+    };
+    setTimeout(() => {
+        document.addEventListener('click', removeTooltip);
+    }, 100);
+}
+
+// HTML转义
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // 获取在外获得的星星统计
@@ -140,11 +280,13 @@ function switchMode(mode) {
     const modeText = mode === 'home' ? '在家模式 🏠' : '在外模式 ✈️';
     showToast(`已切换到${modeText}`);
     
-    // 切换动画
-    const starDisplay = document.querySelector('.star-display');
-    starDisplay.style.animation = 'none';
-    starDisplay.offsetHeight; // 触发重绘
-    starDisplay.style.animation = 'pulse 0.5s ease';
+    // 切换动画 - 让黑板闪烁一下
+    const blackboard = document.querySelector('.star-blackboard');
+    blackboard.style.transition = 'transform 0.3s ease';
+    blackboard.style.transform = 'scale(0.98)';
+    setTimeout(() => {
+        blackboard.style.transform = 'scale(1)';
+    }, 150);
 }
 
 // ==================== 星星操作 ====================
@@ -558,22 +700,33 @@ window.debugStarApp = {
         }
     },
     addTestData: () => {
-        // 添加一些测试数据
+        // 添加一些测试数据 - 模拟最近30天的记录
         const reasons = ['按时吃饭', '按时睡觉', '参加运动'];
-        for (let i = 0; i < 10; i++) {
-            const isAdd = Math.random() > 0.3;
+        const now = Date.now();
+        
+        // 添加20颗星星的记录（大部分是add）
+        for (let i = 0; i < 25; i++) {
+            const isAdd = Math.random() > 0.2; // 80%概率获得星星
+            const daysAgo = Math.floor(Math.random() * 28); // 最近28天
+            const isAway = Math.random() > 0.75; // 25%概率是在外
+            
             const record = {
                 id: generateId(),
                 type: isAdd ? 'add' : 'remove',
                 reason: isAdd ? reasons[Math.floor(Math.random() * 3)] : '没有' + reasons[Math.floor(Math.random() * 3)],
-                timestamp: Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
-                mode: Math.random() > 0.7 ? 'away' : 'home',
-                synced: Math.random() > 0.5
+                timestamp: now - daysAgo * 24 * 60 * 60 * 1000 - Math.random() * 12 * 60 * 60 * 1000,
+                mode: isAway ? 'away' : 'home',
+                synced: isAway ? Math.random() > 0.5 : true, // 在外的一半未同步
+                deleteReason: (!isAdd && isAway) ? '没有' + reasons[Math.floor(Math.random() * 3)] : null
             };
             appState.records.push(record);
             if (isAdd) appState.totalStars++;
             else if (appState.totalStars > 0) appState.totalStars--;
         }
+        
+        // 确保星星数不为负
+        if (appState.totalStars < 0) appState.totalStars = 0;
+        
         appState.records.sort((a, b) => b.timestamp - a.timestamp);
         saveData();
         updateUI();

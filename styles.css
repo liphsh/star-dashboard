@@ -149,83 +149,209 @@ body {
     font-weight: bold;
 }
 
-/* 星星展示区域 */
-.star-display {
-    text-align: center;
-    padding: 30px 20px;
+/* 星星黑板 */
+.star-blackboard {
     margin: 20px 0;
-    background: var(--card-bg);
-    border-radius: 30px;
-    box-shadow: var(--card-shadow);
-    position: relative;
+    background: linear-gradient(145deg, #2D4A3E 0%, #1A3329 50%, #0F2318 100%);
+    border-radius: 20px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
     overflow: hidden;
+    position: relative;
+    border: 8px solid #8B5A2B;
 }
 
-.star-display::before {
+.star-blackboard::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 217, 61, 0.1) 0%, transparent 70%);
-    animation: pulse 3s ease-in-out infinite;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+    pointer-events: none;
 }
 
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 0.8; }
+.blackboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 2px dashed rgba(255, 255, 255, 0.1);
 }
 
-.star-container {
-    position: relative;
-    display: inline-block;
+.blackboard-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #F5F5DC;
+    font-size: 18px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.big-star {
-    font-size: 80px;
-    animation: twinkle 2s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px rgba(255, 217, 61, 0.6));
-}
-
-@keyframes twinkle {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.1) rotate(5deg); }
-}
-
-.star-count {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 32px;
-    font-weight: bold;
-    color: var(--text-primary);
-    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
-}
-
-.star-label {
+.chalk-icon {
     font-size: 24px;
-    color: var(--text-primary);
-    margin-top: 10px;
+}
+
+.star-total {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 217, 61, 0.2);
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 2px solid rgba(255, 217, 61, 0.4);
+}
+
+.total-label {
+    color: #F5F5DC;
+    font-size: 14px;
+}
+
+.total-count {
+    color: var(--primary-yellow);
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 217, 61, 0.5);
+}
+
+.blackboard-content {
+    padding: 20px;
+    min-height: 150px;
     position: relative;
+}
+
+.stars-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+    align-content: flex-start;
+}
+
+.star-item {
+    font-size: 28px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: starAppear 0.5s ease backwards;
+    position: relative;
+}
+
+.star-item:hover {
+    transform: scale(1.3);
+    z-index: 10;
+}
+
+.star-item:active {
+    transform: scale(0.9);
+}
+
+/* 正常星星（在家获得） */
+.star-item.home {
+    filter: drop-shadow(0 0 8px rgba(255, 217, 61, 0.6));
+}
+
+/* 在外获得的星星（粉色） */
+.star-item.away {
+    filter: drop-shadow(0 0 12px rgba(255, 107, 157, 0.8));
+}
+
+.star-item.away::after {
+    content: '✈️';
+    position: absolute;
+    top: -5px;
+    right: -8px;
+    font-size: 10px;
+}
+
+/* 已同步的星星恢复正常 */
+.star-item.synced {
+    filter: drop-shadow(0 0 8px rgba(255, 217, 61, 0.6));
+}
+
+.star-item.synced::after {
+    display: none;
+}
+
+@keyframes starAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0) rotate(-180deg);
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+/* 空状态 */
+.empty-blackboard {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    color: rgba(245, 245, 220, 0.6);
+    text-align: center;
+}
+
+.empty-blackboard.visible {
+    display: flex;
+}
+
+.empty-blackboard .empty-icon {
+    font-size: 50px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.empty-blackboard p {
+    margin: 5px 0;
+}
+
+.empty-blackboard .empty-hint {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.blackboard-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 2px dashed rgba(255, 255, 255, 0.1);
 }
 
 .away-stars-hint {
     display: none;
-    margin-top: 15px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, rgba(255, 107, 157, 0.2), rgba(176, 136, 249, 0.2));
-    border-radius: 15px;
-    font-size: 14px;
-    color: var(--primary-pink);
-    position: relative;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, rgba(255, 107, 157, 0.3), rgba(176, 136, 249, 0.3));
+    border-radius: 12px;
+    font-size: 12px;
+    color: #FFB6C1;
 }
 
 .away-stars-hint.visible {
     display: inline-flex;
+}
+
+.month-hint {
+    display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
+    font-size: 11px;
+    color: rgba(245, 245, 220, 0.5);
 }
 
 .away-icon {
@@ -234,7 +360,17 @@ body {
 
 @keyframes bounce {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+@keyframes twinkle {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(5deg); }
 }
 
 /* 操作按钮 */
@@ -970,24 +1106,62 @@ body {
 }
 
 /* 在外模式特殊样式 */
-body.away-mode .star-display {
-    background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(176, 136, 249, 0.1)), var(--card-bg);
-    border: 3px dashed var(--primary-pink);
+body.away-mode .star-blackboard {
+    border-color: var(--primary-pink);
+    box-shadow: 
+        0 8px 32px rgba(255, 107, 157, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
 }
 
-body.away-mode .big-star {
-    filter: drop-shadow(var(--away-star-glow));
-    animation: twinkleAway 1.5s ease-in-out infinite;
+body.away-mode .blackboard-header {
+    background: linear-gradient(90deg, rgba(255, 107, 157, 0.2), rgba(176, 136, 249, 0.2));
 }
 
-@keyframes twinkleAway {
-    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(var(--away-star-glow)); }
-    50% { transform: scale(1.15) rotate(10deg); filter: drop-shadow(0 0 30px rgba(255, 107, 157, 0.8)); }
+body.away-mode .star-total {
+    background: rgba(255, 107, 157, 0.2);
+    border-color: rgba(255, 107, 157, 0.4);
+}
+
+body.away-mode .total-count {
+    color: var(--primary-pink);
+    text-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
 }
 
 body.away-mode .add-btn {
     background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple));
     box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
+}
+
+/* 星星点击提示 */
+.star-tooltip {
+    position: fixed;
+    background: rgba(93, 78, 109, 0.95);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-size: 13px;
+    max-width: 200px;
+    z-index: 1002;
+    pointer-events: none;
+    animation: tooltipFade 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.star-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid rgba(93, 78, 109, 0.95);
+}
+
+@keyframes tooltipFade {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* 响应式适配 */

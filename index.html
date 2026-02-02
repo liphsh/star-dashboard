@@ -30,16 +30,37 @@
             </button>
         </div>
 
-        <!-- 星星总数展示 -->
-        <div class="star-display">
-            <div class="star-container">
-                <div class="big-star">⭐</div>
-                <div class="star-count" id="starCount">0</div>
+        <!-- 星星黑板 -->
+        <div class="star-blackboard">
+            <div class="blackboard-header">
+                <div class="blackboard-title">
+                    <span class="chalk-icon">📋</span>
+                    <span>我的星星黑板</span>
+                </div>
+                <div class="star-total">
+                    <span class="total-label">共</span>
+                    <span class="total-count" id="starCount">0</span>
+                    <span class="total-label">颗</span>
+                </div>
             </div>
-            <div class="star-label">我的星星</div>
-            <div class="away-stars-hint" id="awayStarsHint">
-                <span class="away-icon">✈️</span>
-                <span id="awayStarsCount">0</span> 颗在外获得
+            <div class="blackboard-content">
+                <div class="stars-grid" id="starsGrid">
+                    <!-- 星星将通过JS动态生成 -->
+                </div>
+                <div class="empty-blackboard" id="emptyBlackboard">
+                    <span class="empty-icon">🌙</span>
+                    <p>还没有星星哦~</p>
+                    <p class="empty-hint">快去完成任务获得星星吧！</p>
+                </div>
+            </div>
+            <div class="blackboard-footer">
+                <div class="away-stars-hint" id="awayStarsHint">
+                    <span class="away-icon">✈️</span>
+                    <span id="awayStarsCount">0</span> 颗在外获得（粉色标记）
+                </div>
+                <div class="month-hint">
+                    <span>📅</span> 显示最近30天的星星
+                </div>
             </div>
         </div>
 
