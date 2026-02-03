@@ -548,71 +548,148 @@ function syncToBlackboard() {
 
 // ==================== 外出快照 ====================
 
+// 记录原始APP中的星星数（用于比较）
+let originalAppStarCount = 0;
+
 function showSnapshot() {
     // 更新日期
     const now = new Date();
     const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
     document.getElementById('snapshotDate').textContent = dateStr;
     
-    // 更新星星总数
-    document.getElementById('snapshotTotal').textContent = appState.totalStars;
+    // 记录当前APP的星星数
+    originalAppStarCount = appState.totalStars;
     
-    // 计算最近30天的统计
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const recentRecords = appState.records.filter(r => r.timestamp >= thirtyDaysAgo);
+    // 设置输入框的值为当前星星数
+    document.getElementById('snapshotTotal').value = appState.totalStars;
+    document.getElementById('currentAppCount').textContent = appState.totalStars;
     
-    const monthAdd = recentRecords.filter(r => r.type === 'add').length;
-    const monthRemove = recentRecords.filter(r => r.type === 'remove').length;
-    const monthNet = monthAdd - monthRemove;
-    
-    document.getElementById('monthAdd').textContent = monthAdd;
-    document.getElementById('monthRemove').textContent = monthRemove;
-    document.getElementById('monthNet').textContent = (monthNet >= 0 ? '+' : '') + monthNet;
-    document.getElementById('monthNet').style.color = monthNet >= 0 ? 'var(--primary-green)' : 'var(--deleted-color)';
+    // 更新差异提示
+    updateDiffHint();
     
     // 渲染最近记录
-    const recentContainer = document.getElementById('recentRecords');
-    const displayRecords = recentRecords.slice(0, 10);
-    
-    if (displayRecords.length === 0) {
-        recentContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">暂无最近记录</p>';
-    } else {
-        recentContainer.innerHTML = `
-            <h4>📝 最近记录</h4>
-            ${displayRecords.map(record => {
-                const icon = record.type === 'add' ? '⭐' : '💔';
-                const date = formatDate(record.timestamp);
-                return `
-                    <div class="recent-record-item">
-                        <span>${icon}</span>
-                        <span style="flex: 1;">${record.reason}</span>
-                        <span style="color: var(--text-secondary);">${date}</span>
-                    </div>
-                `;
-            }).join('')}
-        `;
-    }
+    renderRecentRecords();
     
     openModal('snapshotModal');
 }
 
-function saveSnapshot() {
+// 渲染最近记录
+function renderRecentRecords() {
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recentRecords = appState.records.filter(r => r.timestamp >= thirtyDaysAgo);
+    const recentContainer = document.getElementById('recentRecords');
+    const displayRecords = recentRecords.slice(0, 5);
+    
+    if (displayRecords.length === 0) {
+        recentContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-size: 13px;">暂无最近记录</p>';
+    } else {
+        recentContainer.innerHTML = displayRecords.map(record => {
+            const icon = record.type === 'add' ? '⭐' : '💔';
+            const date = formatDateChinese(record.timestamp);
+            return `
+                <div class="recent-record-item">
+                    <span>${icon}</span>
+                    <span style="flex: 1; font-size: 13px;">${record.reason}</span>
+                    <span style="color: var(--text-secondary); font-size: 12px;">${date}</span>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+// 更新差异提示
+function updateDiffHint() {
+    const input = document.getElementById('snapshotTotal');
+    const diffHint = document.getElementById('diffHint');
+    const newValue = parseInt(input.value) || 0;
+    const diff = newValue - originalAppStarCount;
+    
+    if (diff > 0) {
+        diffHint.textContent = `+${diff}`;
+        diffHint.className = 'diff-hint positive';
+    } else if (diff < 0) {
+        diffHint.textContent = `${diff}`;
+        diffHint.className = 'diff-hint negative';
+    } else {
+        diffHint.textContent = '';
+        diffHint.className = 'diff-hint';
+    }
+}
+
+// 快照星星数量输入变化
+function onSnapshotCountChange() {
+    updateDiffHint();
+}
+
+// 开始旅行 - 同步黑板数据到APP
+function startTravel() {
+    const input = document.getElementById('snapshotTotal');
+    const newValue = parseInt(input.value) || 0;
+    const diff = newValue - appState.totalStars;
+    
+    if (diff !== 0) {
+        // 需要同步星星数量
+        syncStarsToApp(newValue, diff);
+    }
+    
+    // 切换到在外模式
+    appState.mode = 'away';
+    
     // 保存快照数据
     appState.lastSnapshot = {
         timestamp: Date.now(),
-        totalStars: appState.totalStars,
+        totalStars: newValue,
         records: [...appState.records]
     };
+    
     saveData();
+    updateUI();
+    closeModal('snapshotModal');
     
-    // 由于是纯前端应用，这里提示用户截图
-    showToast('请截图保存此快照 📸');
+    // 显示提示
+    showToast('旅途愉快！✈️ 已切换到在外模式');
     
-    // 高亮快照卡片
-    const card = document.querySelector('.snapshot-card');
-    card.style.animation = 'none';
-    card.offsetHeight;
-    card.style.animation = 'pulse 0.5s ease';
+    // 播放动画
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => playStarAnimation('add'), i * 150);
+    }
+}
+
+// 同步星星数量到APP（生成对应的记录）
+function syncStarsToApp(targetCount, diff) {
+    const now = Date.now();
+    
+    if (diff > 0) {
+        // 需要增加星星 - 生成"黑板同步"记录
+        for (let i = 0; i < diff; i++) {
+            const record = {
+                id: generateId(),
+                type: 'add',
+                reason: '黑板同步',
+                timestamp: now - (diff - i), // 稍微错开时间
+                mode: 'home',
+                synced: true
+            };
+            appState.records.unshift(record);
+        }
+    } else if (diff < 0) {
+        // 需要减少星星 - 生成"黑板同步（校正）"记录
+        const removeCount = Math.abs(diff);
+        for (let i = 0; i < removeCount; i++) {
+            const record = {
+                id: generateId(),
+                type: 'remove',
+                reason: '黑板同步（校正）',
+                timestamp: now - (removeCount - i),
+                mode: 'home',
+                synced: true
+            };
+            appState.records.unshift(record);
+        }
+    }
+    
+    // 更新总数
+    appState.totalStars = targetCount;
 }
 
 // ==================== 弹窗控制 ====================
@@ -675,6 +752,12 @@ function formatTime(timestamp) {
 function formatDate(timestamp) {
     const date = new Date(timestamp);
     return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+// 格式化日期为中文格式：x月x日
+function formatDateChinese(timestamp) {
+    const date = new Date(timestamp);
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 function showToast(message) {

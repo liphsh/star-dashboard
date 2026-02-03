@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>星愿计划 ⭐</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
@@ -226,46 +226,69 @@
         </div>
     </div>
 
-    <!-- 外出快照弹窗 -->
+    <!-- 外出快照弹窗 - 出发前同步黑板数据 -->
     <div class="modal" id="snapshotModal">
-        <div class="modal-content">
+        <div class="modal-content snapshot-modal">
             <div class="modal-header">
-                <h2>📸 外出快照</h2>
+                <h2>✈️ 出发前同步</h2>
                 <button class="close-btn" onclick="closeModal('snapshotModal')">✕</button>
             </div>
             <div class="modal-body">
                 <div class="snapshot-content">
-                    <div class="snapshot-card">
-                        <div class="snapshot-date" id="snapshotDate">2024年1月1日</div>
-                        <div class="snapshot-total">
-                            <span class="snapshot-star">⭐</span>
-                            <span class="snapshot-count" id="snapshotTotal">0</span>
-                            <span class="snapshot-label">颗星星</span>
+                    <!-- 步骤提示 -->
+                    <div class="sync-steps">
+                        <div class="step-item">
+                            <span class="step-num">1</span>
+                            <span>看一下家里黑板上有多少颗星星</span>
                         </div>
-                        <div class="snapshot-month">
-                            <h3>📅 最近30天</h3>
-                            <div class="month-stats">
-                                <div class="month-stat">
-                                    <span class="stat-label">获得</span>
-                                    <span class="stat-value add" id="monthAdd">0</span>
-                                </div>
-                                <div class="month-stat">
-                                    <span class="stat-label">失去</span>
-                                    <span class="stat-value remove" id="monthRemove">0</span>
-                                </div>
-                                <div class="month-stat">
-                                    <span class="stat-label">净增</span>
-                                    <span class="stat-value" id="monthNet">0</span>
-                                </div>
-                            </div>
+                        <div class="step-item">
+                            <span class="step-num">2</span>
+                            <span>在下方输入星星总数</span>
                         </div>
-                        <div class="recent-records" id="recentRecords">
-                            <!-- 最近记录将通过JS动态生成 -->
+                        <div class="step-item">
+                            <span class="step-num">3</span>
+                            <span>点击"开始旅行"即可出发啦！</span>
                         </div>
                     </div>
-                    <button class="snapshot-save-btn" onclick="saveSnapshot()">
-                        <span>📱</span> 保存快照图片
+
+                    <!-- 星星输入卡片 -->
+                    <div class="snapshot-card">
+                        <div class="snapshot-date" id="snapshotDate">2024年1月1日</div>
+                        <div class="blackboard-sync-area">
+                            <div class="sync-label">🏠 黑板上的星星总数</div>
+                            <div class="big-input-area">
+                                <span class="input-star">⭐</span>
+                                <input type="number" 
+                                       class="big-star-input" 
+                                       id="snapshotTotal" 
+                                       value="0" 
+                                       min="0" 
+                                       inputmode="numeric"
+                                       onclick="this.select()"
+                                       onchange="onSnapshotCountChange()"
+                                       onkeyup="onSnapshotCountChange()">
+                                <span class="input-unit">颗</span>
+                            </div>
+                            <div class="current-app-count">
+                                📱 当前APP记录：<span id="currentAppCount">0</span> 颗
+                                <span class="diff-hint" id="diffHint"></span>
+                            </div>
+                        </div>
+
+                        <!-- 最近记录预览 -->
+                        <div class="recent-records-preview">
+                            <h4>📝 最近记录</h4>
+                            <div class="recent-records-list" id="recentRecords">
+                                <!-- 最近记录将通过JS动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 开始旅行按钮 -->
+                    <button class="start-travel-btn" onclick="startTravel()">
+                        <span>✈️</span> 开始旅行
                     </button>
+                    <p class="travel-hint">同步后，旅途中获得的星星会用粉色标记</p>
                 </div>
             </div>
         </div>
@@ -277,6 +300,6 @@
     <!-- Toast提示 -->
     <div class="toast" id="toast"></div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>
