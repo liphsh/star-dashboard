@@ -10,7 +10,9 @@ let appState = {
     totalStars: 0,          // 星星总数
     mode: 'home',           // 当前模式: 'home' 或 'away'
     records: [],            // 所有星星记录
-    lastSnapshot: null      // 最后一次快照
+    lastSnapshot: null,     // 最后一次快照
+    wishes: [],             // 心愿列表
+    fulfilledWishes: []     // 已实现的心愿
 };
 
 // 记录结构
@@ -42,6 +44,8 @@ function loadData() {
             appState.records = appState.records || [];
             appState.totalStars = appState.totalStars || 0;
             appState.mode = appState.mode || 'home';
+            appState.wishes = appState.wishes || [];
+            appState.fulfilledWishes = appState.fulfilledWishes || [];
         } catch (e) {
             console.error('数据加载失败，使用默认数据');
             resetData();
@@ -60,7 +64,9 @@ function resetData() {
         totalStars: 0,
         mode: 'home',
         records: [],
-        lastSnapshot: null
+        lastSnapshot: null,
+        wishes: [],
+        fulfilledWishes: []
     };
     saveData();
 }
@@ -123,28 +129,11 @@ function renderStarsGrid() {
     const grid = document.getElementById('starsGrid');
     const emptyState = document.getElementById('emptyBlackboard');
     
-    // 获取最近30天的有效星星（计算净值）
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const recentRecords = appState.records.filter(r => r.timestamp >= thirtyDaysAgo);
-    
-    // 按时间排序（从旧到新）
-    const sortedRecords = [...recentRecords].sort((a, b) => a.timestamp - b.timestamp);
-    
-    // 计算每颗星星的状态
-    // 使用栈来追踪星星：add 压入，remove 弹出
-    const starStack = [];
-    
-    sortedRecords.forEach(record => {
-        if (record.type === 'add') {
-            starStack.push(record);
-        } else if (record.type === 'remove' && starStack.length > 0) {
-            // 移除最新的一颗星星
-            starStack.pop();
-        }
-    });
+    // 直接根据 totalStars 来渲染星星数量
+    const totalStars = appState.totalStars;
     
     // 显示/隐藏空状态
-    if (starStack.length === 0) {
+    if (totalStars <= 0) {
         grid.innerHTML = '';
         emptyState.classList.add('visible');
         return;
@@ -152,8 +141,34 @@ function renderStarsGrid() {
     
     emptyState.classList.remove('visible');
     
+    // 获取最近30天的 add 记录，用于标记星星状态（在家/在外）
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recentAddRecords = appState.records
+        .filter(r => r.type === 'add' && r.timestamp >= thirtyDaysAgo)
+        .sort((a, b) => a.timestamp - b.timestamp); // 从旧到新排序
+    
+    // 生成星星数据
+    const starsData = [];
+    
+    // 首先用最近30天的 add 记录填充
+    for (let i = 0; i < Math.min(recentAddRecords.length, totalStars); i++) {
+        starsData.push(recentAddRecords[i]);
+    }
+    
+    // 如果星星总数大于最近记录数，用默认状态填充剩余的
+    const remaining = totalStars - starsData.length;
+    for (let i = 0; i < remaining; i++) {
+        starsData.unshift({
+            id: `default-${i}`,
+            reason: '历史积累',
+            timestamp: Date.now() - 31 * 24 * 60 * 60 * 1000, // 30天前
+            mode: 'home',
+            synced: true
+        });
+    }
+    
     // 渲染每颗星星
-    grid.innerHTML = starStack.map((record, index) => {
+    grid.innerHTML = starsData.map((record, index) => {
         // 判断星星类型
         const isAway = record.mode === 'away';
         const isSynced = record.synced;
@@ -171,7 +186,7 @@ function renderStarsGrid() {
             }
         }
         
-        const delay = Math.min(index * 0.05, 1); // 动画延迟，最多1秒
+        const delay = Math.min(index * 0.03, 0.5); // 动画延迟，最多0.5秒
         
         return `
             <span class="${starClass}" 
@@ -690,6 +705,275 @@ function syncStarsToApp(targetCount, diff) {
     
     // 更新总数
     appState.totalStars = targetCount;
+}
+
+// ==================== 心愿系统 ====================
+
+// 显示心愿列表
+function showWishList() {
+    // 更新当前星星数
+    document.getElementById('wishCurrentStars').textContent = appState.totalStars;
+    
+    // 渲染心愿列表
+    renderWishList();
+    
+    openModal('wishListModal');
+}
+
+// 渲染心愿列表
+function renderWishList() {
+    const container = document.getElementById('wishList');
+    
+    if (appState.wishes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-wishes">
+                <div class="empty-icon">🌟</div>
+                <p>还没有心愿哦~</p>
+                <p class="hint">许一个心愿，然后努力攒星星吧！</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = appState.wishes.map(wish => {
+        const progress = Math.min((appState.totalStars / wish.starsNeeded) * 100, 100);
+        const canFulfill = appState.totalStars >= wish.starsNeeded;
+        const progressClass = canFulfill ? 'complete' : '';
+        
+        return `
+            <div class="wish-item" data-id="${wish.id}">
+                <div class="wish-item-header">
+                    <div class="wish-name">${escapeHtml(wish.name)}</div>
+                    <div class="wish-actions">
+                        <button class="wish-action-btn" onclick="editWish('${wish.id}')" title="编辑">✏️</button>
+                        <button class="wish-action-btn delete" onclick="deleteWish('${wish.id}')" title="删除">🗑️</button>
+                    </div>
+                </div>
+                <div class="wish-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill ${progressClass}" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="wish-progress-text">
+                        <span class="current">已有 ${appState.totalStars} 颗</span>
+                        <span class="needed">需要 ${wish.starsNeeded} 颗</span>
+                    </div>
+                </div>
+                <button class="fulfill-wish-btn ${canFulfill ? 'ready' : 'not-ready'}" 
+                        onclick="${canFulfill ? `showFulfillModal('${wish.id}')` : ''}"
+                        ${canFulfill ? '' : 'disabled'}>
+                    ${canFulfill ? '🎉 可以实现啦！' : `还差 ${wish.starsNeeded - appState.totalStars} 颗星星`}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+// 显示添加心愿弹窗
+function showAddWishModal() {
+    document.getElementById('wishModalTitle').textContent = '✨ 许个心愿';
+    document.getElementById('wishNameInput').value = '';
+    document.getElementById('wishAmountInput').value = '10';
+    document.getElementById('editWishId').value = '';
+    
+    closeModal('wishListModal');
+    openModal('addWishModal');
+}
+
+// 编辑心愿
+function editWish(wishId) {
+    const wish = appState.wishes.find(w => w.id === wishId);
+    if (!wish) return;
+    
+    document.getElementById('wishModalTitle').textContent = '✏️ 编辑心愿';
+    document.getElementById('wishNameInput').value = wish.name;
+    document.getElementById('wishAmountInput').value = wish.starsNeeded;
+    document.getElementById('editWishId').value = wishId;
+    
+    closeModal('wishListModal');
+    openModal('addWishModal');
+}
+
+// 调整心愿星星数量
+function adjustWishAmount(delta) {
+    const input = document.getElementById('wishAmountInput');
+    let value = parseInt(input.value) || 0;
+    value += delta;
+    if (value < 1) value = 1;
+    if (value > 999) value = 999;
+    input.value = value;
+}
+
+// 设置心愿星星数量
+function setWishAmount(amount) {
+    document.getElementById('wishAmountInput').value = amount;
+}
+
+// 保存心愿
+function saveWish() {
+    const name = document.getElementById('wishNameInput').value.trim();
+    const starsNeeded = parseInt(document.getElementById('wishAmountInput').value) || 10;
+    const editId = document.getElementById('editWishId').value;
+    
+    if (!name) {
+        showToast('请输入心愿内容');
+        return;
+    }
+    
+    if (starsNeeded < 1) {
+        showToast('星星数量至少为1');
+        return;
+    }
+    
+    if (editId) {
+        // 编辑现有心愿
+        const wish = appState.wishes.find(w => w.id === editId);
+        if (wish) {
+            wish.name = name;
+            wish.starsNeeded = starsNeeded;
+            showToast('心愿已更新 ✨');
+        }
+    } else {
+        // 添加新心愿
+        const wish = {
+            id: generateId(),
+            name: name,
+            starsNeeded: starsNeeded,
+            createdAt: Date.now()
+        };
+        appState.wishes.push(wish);
+        showToast('心愿已许下 🌟');
+    }
+    
+    saveData();
+    closeModal('addWishModal');
+    showWishList();
+}
+
+// 删除心愿
+function deleteWish(wishId) {
+    if (!confirm('确定要删除这个心愿吗？')) return;
+    
+    appState.wishes = appState.wishes.filter(w => w.id !== wishId);
+    saveData();
+    renderWishList();
+    showToast('心愿已删除');
+}
+
+// 显示兑现心愿确认弹窗
+function showFulfillModal(wishId) {
+    const wish = appState.wishes.find(w => w.id === wishId);
+    if (!wish) return;
+    
+    document.getElementById('fulfillWishName').textContent = wish.name;
+    document.getElementById('fulfillCost').textContent = wish.starsNeeded;
+    document.getElementById('fulfillRemaining').textContent = appState.totalStars - wish.starsNeeded;
+    document.getElementById('fulfillWishId').value = wishId;
+    
+    closeModal('wishListModal');
+    openModal('fulfillWishModal');
+}
+
+// 确认兑现心愿
+function confirmFulfillWish() {
+    const wishId = document.getElementById('fulfillWishId').value;
+    const wish = appState.wishes.find(w => w.id === wishId);
+    
+    if (!wish) return;
+    
+    if (appState.totalStars < wish.starsNeeded) {
+        showToast('星星不够哦~');
+        return;
+    }
+    
+    // 扣除星星
+    appState.totalStars -= wish.starsNeeded;
+    
+    // 添加记录
+    const record = {
+        id: generateId(),
+        type: 'remove',
+        reason: `实现心愿：${wish.name}`,
+        timestamp: Date.now(),
+        mode: appState.mode,
+        synced: appState.mode === 'home'
+    };
+    appState.records.unshift(record);
+    
+    // 将心愿移到已实现列表
+    const fulfilledWish = {
+        ...wish,
+        fulfilledAt: Date.now(),
+        starsUsed: wish.starsNeeded
+    };
+    appState.fulfilledWishes.unshift(fulfilledWish);
+    
+    // 从心愿列表中移除
+    appState.wishes = appState.wishes.filter(w => w.id !== wishId);
+    
+    saveData();
+    updateUI();
+    closeModal('fulfillWishModal');
+    
+    // 播放庆祝动画
+    playCelebration();
+    
+    showToast(`🎉 恭喜！心愿「${wish.name}」已实现！`);
+}
+
+// 显示已实现心愿列表
+function showFulfilledWishes() {
+    const container = document.getElementById('fulfilledWishList');
+    
+    if (appState.fulfilledWishes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-wishes">
+                <div class="empty-icon">🏆</div>
+                <p>还没有实现的心愿</p>
+                <p class="hint">继续努力，你可以的！</p>
+            </div>
+        `;
+    } else {
+        container.innerHTML = appState.fulfilledWishes.map(wish => {
+            const date = formatDateChinese(wish.fulfilledAt);
+            return `
+                <div class="fulfilled-item">
+                    <div class="fulfilled-icon">🎁</div>
+                    <div class="fulfilled-info">
+                        <div class="fulfilled-name">${escapeHtml(wish.name)}</div>
+                        <div class="fulfilled-details">花费 ${wish.starsUsed} 颗星星</div>
+                    </div>
+                    <div class="fulfilled-date">${date}</div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    closeModal('wishListModal');
+    openModal('fulfilledWishesModal');
+}
+
+// 播放庆祝动画
+function playCelebration() {
+    const celebration = document.createElement('div');
+    celebration.className = 'celebration';
+    document.body.appendChild(celebration);
+    
+    const emojis = ['🎉', '🎊', '⭐', '🌟', '✨', '🎁', '🏆', '💫'];
+    
+    for (let i = 0; i < 30; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+        celebration.appendChild(confetti);
+    }
+    
+    // 3秒后移除庆祝动画
+    setTimeout(() => {
+        celebration.remove();
+    }, 5000);
 }
 
 // ==================== 弹窗控制 ====================

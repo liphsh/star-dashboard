@@ -1362,3 +1362,561 @@ button, .mode-btn, .action-btn, .menu-btn, .reason-btn {
     user-select: none;
     -webkit-user-select: none;
 }
+
+/* ==================== 心愿系统样式 ==================== */
+
+/* 心愿按钮特殊样式 */
+.wish-btn {
+    background: linear-gradient(135deg, rgba(255, 217, 61, 0.2), rgba(255, 139, 61, 0.2));
+    border: 2px solid var(--primary-yellow);
+}
+
+/* 心愿弹窗 */
+.wish-modal {
+    max-width: 420px;
+}
+
+/* 当前星星信息 */
+.wish-star-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, rgba(255, 217, 61, 0.15), rgba(255, 139, 61, 0.15));
+    border-radius: 15px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    color: var(--text-primary);
+}
+
+.wish-star-info span:first-child {
+    font-size: 24px;
+}
+
+.wish-star-info strong {
+    color: var(--primary-orange);
+    font-size: 20px;
+}
+
+/* 心愿列表 */
+.wish-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.wish-item {
+    background: rgba(147, 112, 219, 0.05);
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 12px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.wish-item:hover {
+    background: rgba(147, 112, 219, 0.1);
+}
+
+.wish-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.wish-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wish-name::before {
+    content: '🎁';
+    font-size: 20px;
+}
+
+.wish-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.wish-action-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(147, 112, 219, 0.1);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wish-action-btn:hover {
+    background: rgba(147, 112, 219, 0.2);
+}
+
+.wish-action-btn.delete:hover {
+    background: rgba(255, 71, 87, 0.2);
+}
+
+/* 心愿进度条 */
+.wish-progress {
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    height: 12px;
+    background: rgba(147, 112, 219, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-yellow), var(--primary-orange));
+    border-radius: 6px;
+    transition: width 0.5s ease;
+    position: relative;
+}
+
+.progress-fill.complete {
+    background: linear-gradient(90deg, var(--primary-green), #5DBF3E);
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.wish-progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+.wish-progress-text .current {
+    color: var(--primary-orange);
+    font-weight: bold;
+}
+
+.wish-progress-text .needed {
+    color: var(--text-primary);
+}
+
+/* 兑现心愿按钮 */
+.fulfill-wish-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.fulfill-wish-btn.ready {
+    background: linear-gradient(135deg, var(--primary-green), #5DBF3E);
+    color: white;
+    box-shadow: 0 4px 15px rgba(126, 217, 87, 0.3);
+}
+
+.fulfill-wish-btn.ready:active {
+    transform: scale(0.98);
+}
+
+.fulfill-wish-btn.not-ready {
+    background: rgba(147, 112, 219, 0.1);
+    color: var(--text-secondary);
+    cursor: default;
+}
+
+/* 添加心愿按钮 */
+.add-wish-btn {
+    width: 100%;
+    padding: 15px;
+    border: 3px dashed var(--primary-purple);
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(176, 136, 249, 0.1), rgba(255, 107, 157, 0.1));
+    color: var(--primary-purple);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.add-wish-btn:hover {
+    background: linear-gradient(135deg, rgba(176, 136, 249, 0.2), rgba(255, 107, 157, 0.2));
+}
+
+.add-wish-btn:active {
+    transform: scale(0.98);
+}
+
+/* 查看已实现心愿按钮 */
+.view-fulfilled-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 217, 61, 0.15);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.view-fulfilled-btn:hover {
+    background: rgba(255, 217, 61, 0.25);
+    color: var(--text-primary);
+}
+
+/* 心愿表单 */
+.wish-form {
+    padding: 10px 0;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 15px;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 15px;
+    border: 3px solid rgba(147, 112, 219, 0.2);
+    border-radius: 15px;
+    font-family: inherit;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input[type="text"]:focus {
+    border-color: var(--primary-purple);
+}
+
+/* 星星数量输入 */
+.star-amount-input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.amount-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(147, 112, 219, 0.15);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.amount-btn:hover {
+    background: rgba(147, 112, 219, 0.25);
+}
+
+.amount-btn:active {
+    transform: scale(0.95);
+}
+
+.star-amount-input input {
+    width: 80px;
+    padding: 12px;
+    border: 3px solid var(--primary-yellow);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    color: var(--primary-orange);
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.star-amount-input input::-webkit-outer-spin-button,
+.star-amount-input input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.amount-presets {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.amount-presets span {
+    padding: 6px 14px;
+    background: rgba(255, 217, 61, 0.2);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.amount-presets span:hover {
+    background: rgba(255, 217, 61, 0.4);
+    color: var(--text-primary);
+}
+
+/* 保存心愿按钮 */
+.save-wish-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--primary-purple), var(--primary-pink));
+    color: white;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 8px 25px rgba(176, 136, 249, 0.3);
+    margin-top: 10px;
+}
+
+.save-wish-btn:active {
+    transform: scale(0.98);
+}
+
+/* 兑现心愿确认弹窗 */
+.fulfill-content {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.fulfill-wish-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(255, 217, 61, 0.15), rgba(255, 139, 61, 0.15));
+    border-radius: 15px;
+}
+
+.fulfill-wish-name::before {
+    content: '🎁 ';
+}
+
+.fulfill-cost {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.cost-amount {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--primary-orange);
+    margin: 0 5px;
+}
+
+.fulfill-remaining {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 25px;
+}
+
+.fulfill-remaining span:nth-child(2) {
+    color: var(--primary-green);
+    font-weight: bold;
+}
+
+.fulfill-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.cancel-btn {
+    flex: 1;
+    padding: 15px;
+    border: 2px solid rgba(147, 112, 219, 0.3);
+    border-radius: 15px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+}
+
+.confirm-fulfill-btn {
+    flex: 2;
+    padding: 15px;
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--primary-green), #5DBF3E);
+    color: white;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 6px 20px rgba(126, 217, 87, 0.3);
+}
+
+.confirm-fulfill-btn:active {
+    transform: scale(0.98);
+}
+
+/* 已实现心愿列表 */
+.fulfilled-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.fulfilled-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(126, 217, 87, 0.1), rgba(255, 217, 61, 0.1));
+    border-radius: 15px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--primary-green);
+}
+
+.fulfilled-icon {
+    font-size: 30px;
+}
+
+.fulfilled-info {
+    flex: 1;
+}
+
+.fulfilled-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.fulfilled-details {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.fulfilled-date {
+    font-size: 12px;
+    color: var(--primary-green);
+    font-weight: bold;
+}
+
+/* 空状态 */
+.empty-wishes {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-wishes .empty-icon {
+    font-size: 60px;
+    margin-bottom: 15px;
+}
+
+.empty-wishes p {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.empty-wishes .hint {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* 庆祝动画 */
+.celebration {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1100;
+}
+
+.confetti {
+    position: absolute;
+    font-size: 30px;
+    animation: confettiFall 3s ease-out forwards;
+}
+
+@keyframes confettiFall {
+    0% {
+        opacity: 1;
+        transform: translateY(-100px) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(100vh) rotate(720deg);
+    }
+}

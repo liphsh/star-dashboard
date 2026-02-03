@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>星愿计划 ⭐</title>
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
@@ -78,6 +78,10 @@
 
         <!-- 功能菜单 -->
         <div class="menu-buttons">
+            <button class="menu-btn wish-btn" onclick="showWishList()">
+                <span class="menu-icon">🎁</span>
+                <span>我的心愿</span>
+            </button>
             <button class="menu-btn" onclick="showHistory()">
                 <span class="menu-icon">📋</span>
                 <span>星星记录</span>
@@ -294,12 +298,130 @@
         </div>
     </div>
 
+    <!-- 心愿列表弹窗 -->
+    <div class="modal" id="wishListModal">
+        <div class="modal-content wish-modal">
+            <div class="modal-header">
+                <h2>🎁 我的心愿</h2>
+                <button class="close-btn" onclick="closeModal('wishListModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- 当前星星提示 -->
+                <div class="wish-star-info">
+                    <span>⭐</span>
+                    <span>当前拥有 <strong id="wishCurrentStars">0</strong> 颗星星</span>
+                </div>
+                
+                <!-- 心愿列表 -->
+                <div class="wish-list" id="wishList">
+                    <!-- 心愿将通过JS动态生成 -->
+                </div>
+                
+                <!-- 添加心愿按钮 -->
+                <button class="add-wish-btn" onclick="showAddWishModal()">
+                    <span>✨</span> 许一个新心愿
+                </button>
+                
+                <!-- 查看已实现心愿 -->
+                <button class="view-fulfilled-btn" onclick="showFulfilledWishes()">
+                    <span>🏆</span> 已实现的心愿
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑心愿弹窗 -->
+    <div class="modal" id="addWishModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="wishModalTitle">✨ 许个心愿</h2>
+                <button class="close-btn" onclick="closeModal('addWishModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="wish-form">
+                    <div class="form-group">
+                        <label>🌈 我的心愿是...</label>
+                        <input type="text" id="wishNameInput" placeholder="例如：去游乐园玩" maxlength="30">
+                    </div>
+                    <div class="form-group">
+                        <label>⭐ 需要积攒多少颗星星？</label>
+                        <div class="star-amount-input">
+                            <button class="amount-btn" onclick="adjustWishAmount(-5)">-5</button>
+                            <button class="amount-btn" onclick="adjustWishAmount(-1)">-1</button>
+                            <input type="number" id="wishAmountInput" value="10" min="1" max="999">
+                            <button class="amount-btn" onclick="adjustWishAmount(1)">+1</button>
+                            <button class="amount-btn" onclick="adjustWishAmount(5)">+5</button>
+                        </div>
+                        <div class="amount-presets">
+                            <span onclick="setWishAmount(5)">5颗</span>
+                            <span onclick="setWishAmount(10)">10颗</span>
+                            <span onclick="setWishAmount(20)">20颗</span>
+                            <span onclick="setWishAmount(30)">30颗</span>
+                            <span onclick="setWishAmount(50)">50颗</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="editWishId" value="">
+                    <button class="save-wish-btn" onclick="saveWish()">
+                        <span>💫</span> 保存心愿
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 兑现心愿确认弹窗 -->
+    <div class="modal" id="fulfillWishModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎉 实现心愿</h2>
+                <button class="close-btn" onclick="closeModal('fulfillWishModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="fulfill-content">
+                    <div class="fulfill-wish-name" id="fulfillWishName">去游乐园玩</div>
+                    <div class="fulfill-cost">
+                        <span>需要消耗</span>
+                        <span class="cost-amount" id="fulfillCost">10</span>
+                        <span>颗星星</span>
+                    </div>
+                    <div class="fulfill-remaining">
+                        <span>剩余星星：</span>
+                        <span id="fulfillRemaining">5</span>
+                        <span>颗</span>
+                    </div>
+                    <input type="hidden" id="fulfillWishId" value="">
+                    <div class="fulfill-buttons">
+                        <button class="cancel-btn" onclick="closeModal('fulfillWishModal')">再等等</button>
+                        <button class="confirm-fulfill-btn" onclick="confirmFulfillWish()">
+                            <span>🎁</span> 实现心愿！
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 已实现心愿列表弹窗 -->
+    <div class="modal" id="fulfilledWishesModal">
+        <div class="modal-content wish-modal">
+            <div class="modal-header">
+                <h2>🏆 已实现的心愿</h2>
+                <button class="close-btn" onclick="closeModal('fulfilledWishesModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="fulfilled-list" id="fulfilledWishList">
+                    <!-- 已实现心愿将通过JS动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 星星动画容器 -->
     <div class="star-animation-container" id="starAnimationContainer"></div>
 
     <!-- Toast提示 -->
     <div class="toast" id="toast"></div>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>
