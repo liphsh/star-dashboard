@@ -1,0 +1,10 @@
+# CNB 云原生构建配置
+# 文档：https://cnb.cool/docs
+
+main:
+  push:
+    - stages:
+        - name: deploy
+          type: html:Chinese Mainland
+          options:
+            base_path: /
