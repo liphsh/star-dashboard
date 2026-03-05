@@ -1,7 +1,7 @@
 // 星愿计划 Service Worker
 // 用于离线缓存和 PWA 功能
 
-const CACHE_NAME = 'star-dashboard-v1';
+const CACHE_NAME = 'star-dashboard-v2';
 const urlsToCache = [
   './',
   './index.html',

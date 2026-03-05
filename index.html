@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     
     <!-- 样式 -->
-    <link rel="stylesheet" href="styles.css?v=7">
+    <link rel="stylesheet" href="styles.css?v=8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
@@ -102,6 +102,14 @@
             <button class="menu-btn sync-btn" id="syncBtn" onclick="showSyncModal()">
                 <span class="menu-icon">✏️</span>
                 <span>同步到黑板</span>
+            </button>
+            <button class="menu-btn" onclick="exportData()">
+                <span class="menu-icon">💾</span>
+                <span>备份数据</span>
+            </button>
+            <button class="menu-btn" onclick="importData()">
+                <span class="menu-icon">📂</span>
+                <span>恢复数据</span>
             </button>
         </div>
 
@@ -431,7 +439,7 @@
     <!-- Toast提示 -->
     <div class="toast" id="toast"></div>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
     
     <!-- 注册 Service Worker -->
     <script>

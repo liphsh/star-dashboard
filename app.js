@@ -28,34 +28,127 @@ let appState = {
 
 // ==================== 初始化 ====================
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadData();
+document.addEventListener('DOMContentLoaded', async () => {
+    await requestPersistentStorage();
+    await loadData();
     updateUI();
     initEventListeners();
 });
 
-// 加载本地存储的数据
-function loadData() {
-    const savedData = localStorage.getItem('starWishPlan');
-    if (savedData) {
-        try {
-            appState = JSON.parse(savedData);
-            // 确保数据结构完整
-            appState.records = appState.records || [];
-            appState.totalStars = appState.totalStars || 0;
-            appState.mode = appState.mode || 'home';
-            appState.wishes = appState.wishes || [];
-            appState.fulfilledWishes = appState.fulfilledWishes || [];
-        } catch (e) {
-            console.error('数据加载失败，使用默认数据');
-            resetData();
-        }
+// 请求永久存储权限，防止系统/手机管家清理数据
+async function requestPersistentStorage() {
+    if (navigator.storage && navigator.storage.persist) {
+        const granted = await navigator.storage.persist();
+        console.log(granted ? '已获得永久存储权限' : '永久存储权限未授予');
     }
 }
 
-// 保存数据到本地存储
+// ==================== 数据持久化（双重保障） ====================
+
+const DB_NAME = 'StarWishPlanDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'appData';
+const DATA_KEY = 'starWishPlan';
+
+// 打开 IndexedDB
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// 从 IndexedDB 读取数据
+async function loadFromIndexedDB() {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.get(DATA_KEY);
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (e) {
+        console.error('IndexedDB 读取失败:', e);
+        return null;
+    }
+}
+
+// 写入 IndexedDB
+async function saveToIndexedDB(data) {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.put(data, DATA_KEY);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    } catch (e) {
+        console.error('IndexedDB 写入失败:', e);
+    }
+}
+
+// 加载数据：优先 localStorage，失败则从 IndexedDB 恢复
+async function loadData() {
+    let data = null;
+
+    // 先尝试 localStorage
+    const savedData = localStorage.getItem(DATA_KEY);
+    if (savedData) {
+        try {
+            data = JSON.parse(savedData);
+        } catch (e) {
+            console.error('localStorage 数据解析失败');
+        }
+    }
+
+    // localStorage 没有数据时，从 IndexedDB 恢复
+    if (!data) {
+        console.log('localStorage 为空，尝试从 IndexedDB 恢复...');
+        data = await loadFromIndexedDB();
+        if (data) {
+            console.log('从 IndexedDB 恢复数据成功！');
+            // 恢复到 localStorage
+            localStorage.setItem(DATA_KEY, JSON.stringify(data));
+        }
+    }
+
+    if (data) {
+        appState = data;
+        // 确保数据结构完整
+        appState.records = appState.records || [];
+        appState.totalStars = appState.totalStars || 0;
+        appState.mode = appState.mode || 'home';
+        appState.wishes = appState.wishes || [];
+        appState.fulfilledWishes = appState.fulfilledWishes || [];
+    }
+}
+
+// 保存数据：同时写入 localStorage 和 IndexedDB
 function saveData() {
-    localStorage.setItem('starWishPlan', JSON.stringify(appState));
+    const jsonStr = JSON.stringify(appState);
+
+    // 写入 localStorage
+    try {
+        localStorage.setItem(DATA_KEY, jsonStr);
+    } catch (e) {
+        console.error('localStorage 写入失败:', e);
+    }
+
+    // 异步写入 IndexedDB 作为备份
+    saveToIndexedDB(appState).catch(e => {
+        console.error('IndexedDB 备份失败:', e);
+    });
 }
 
 // 重置数据
@@ -69,6 +162,63 @@ function resetData() {
         fulfilledWishes: []
     };
     saveData();
+}
+
+// ==================== 数据导出/导入 ====================
+
+// 导出数据为 JSON 文件
+function exportData() {
+    const dataStr = JSON.stringify(appState, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}`;
+    const filename = `star-dashboard-backup-${dateStr}.json`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showToast('Backup exported successfully!');
+}
+
+// 触发文件选择进行导入
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const imported = JSON.parse(event.target.result);
+
+                // 基本校验
+                if (typeof imported.totalStars !== 'number' || !Array.isArray(imported.records)) {
+                    showToast('Invalid backup file');
+                    return;
+                }
+
+                appState = imported;
+                appState.records = appState.records || [];
+                appState.wishes = appState.wishes || [];
+                appState.fulfilledWishes = appState.fulfilledWishes || [];
+                saveData();
+                updateUI();
+                showToast('Data restored successfully!');
+            } catch (err) {
+                showToast('Failed to read backup file');
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
 }
 
 // 初始化事件监听
