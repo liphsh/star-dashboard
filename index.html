@@ -4,71 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>星愿计划 ⭐</title>
-    
-    <!-- PWA 支持 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FFB347">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="星愿计划">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    
-    <!-- 样式 -->
-    <link rel="stylesheet" href="styles.css?v=8">
+    <link rel="stylesheet" href="styles.css?v=10">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
-        <!-- 顶部装饰 -->
-        <div class="top-decoration">
-            <div class="cloud cloud-1">☁️</div>
-            <div class="cloud cloud-2">☁️</div>
-        </div>
-
-        <!-- 模式切换 -->
-        <div class="mode-switcher">
-            <button id="homeMode" class="mode-btn active" onclick="switchMode('home')">
-                <span class="mode-icon">🏠</span>
-                <span class="mode-text">在家</span>
-            </button>
-            <button id="awayMode" class="mode-btn" onclick="switchMode('away')">
-                <span class="mode-icon">✈️</span>
-                <span class="mode-text">在外</span>
-            </button>
-        </div>
-
         <!-- 星星黑板 -->
         <div class="star-blackboard">
             <div class="blackboard-header">
                 <div class="blackboard-title">
-                    <span class="chalk-icon">📋</span>
+                    <span>📋</span>
                     <span>我的星星黑板</span>
                 </div>
-                <div class="star-total">
+                <div class="star-total" onclick="showEditTotalModal()">
                     <span class="total-label">共</span>
                     <span class="total-count" id="starCount">0</span>
-                    <span class="total-label">颗</span>
+                    <span class="total-label">颗 ✏️</span>
                 </div>
             </div>
             <div class="blackboard-content">
-                <div class="stars-grid" id="starsGrid">
-                    <!-- 星星将通过JS动态生成 -->
-                </div>
+                <div class="stars-grid" id="starsGrid"></div>
                 <div class="empty-blackboard" id="emptyBlackboard">
                     <span class="empty-icon">🌙</span>
                     <p>还没有星星哦~</p>
                     <p class="empty-hint">快去完成任务获得星星吧！</p>
-                </div>
-            </div>
-            <div class="blackboard-footer">
-                <div class="away-stars-hint" id="awayStarsHint">
-                    <span class="away-icon">✈️</span>
-                    <span id="awayStarsCount">0</span> 颗在外获得（粉色标记）
-                </div>
-                <div class="month-hint">
-                    <span>📅</span> 显示最近30天的星星
                 </div>
             </div>
         </div>
@@ -85,44 +52,24 @@
             </button>
         </div>
 
-        <!-- 功能菜单 -->
-        <div class="menu-buttons">
-            <button class="menu-btn wish-btn" onclick="showWishList()">
-                <span class="menu-icon">🎁</span>
-                <span>我的心愿</span>
+        <!-- 底部导航栏 -->
+        <nav class="bottom-nav">
+            <button class="nav-item" onclick="showWishList()">
+                <span class="nav-icon">🎁</span>
+                <span class="nav-label">我的心愿</span>
             </button>
-            <button class="menu-btn" onclick="showHistory()">
-                <span class="menu-icon">📋</span>
-                <span>星星记录</span>
+            <button class="nav-item" onclick="showHistory()">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">记录</span>
             </button>
-            <button class="menu-btn" onclick="showSnapshot()">
-                <span class="menu-icon">📸</span>
-                <span>外出快照</span>
+            <button class="nav-item" onclick="showMorePanel()">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">更多</span>
             </button>
-            <button class="menu-btn sync-btn" id="syncBtn" onclick="showSyncModal()">
-                <span class="menu-icon">✏️</span>
-                <span>同步到黑板</span>
-            </button>
-            <button class="menu-btn" onclick="exportData()">
-                <span class="menu-icon">💾</span>
-                <span>备份数据</span>
-            </button>
-            <button class="menu-btn" onclick="importData()">
-                <span class="menu-icon">📂</span>
-                <span>恢复数据</span>
-            </button>
-        </div>
-
-        <!-- 底部装饰 -->
-        <div class="bottom-decoration">
-            <div class="grass"></div>
-            <div class="flower flower-1">🌸</div>
-            <div class="flower flower-2">🌼</div>
-            <div class="flower flower-3">🌷</div>
-        </div>
+        </nav>
     </div>
 
-    <!-- 添加星星弹窗 -->
+    <!-- 获得星星弹窗 -->
     <div class="modal" id="addModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -132,32 +79,42 @@
             <div class="modal-body">
                 <p class="modal-hint">宝贝做到了什么呢？</p>
                 <div class="reason-buttons">
-                    <button class="reason-btn" onclick="addStar('按时吃饭')">
+                    <button class="reason-btn selected" data-reason="按时吃饭" onclick="selectReason(this, 'add')">
                         <span class="reason-icon">🍚</span>
                         <span>按时吃饭</span>
                     </button>
-                    <button class="reason-btn" onclick="addStar('按时睡觉')">
+                    <button class="reason-btn" data-reason="按时睡觉" onclick="selectReason(this, 'add')">
                         <span class="reason-icon">😴</span>
                         <span>按时睡觉</span>
                     </button>
-                    <button class="reason-btn" onclick="addStar('参加运动')">
+                    <button class="reason-btn" data-reason="参加运动" onclick="selectReason(this, 'add')">
                         <span class="reason-icon">⚽</span>
                         <span>参加运动</span>
                     </button>
-                    <button class="reason-btn custom-btn" onclick="showCustomReason('add')">
+                    <button class="reason-btn custom-btn" data-reason="custom" onclick="selectReason(this, 'add')">
                         <span class="reason-icon">✨</span>
                         <span>其他原因</span>
                     </button>
                 </div>
                 <div class="custom-input-area" id="addCustomArea" style="display: none;">
-                    <input type="text" id="addCustomReason" placeholder="输入获得星星的原因..." maxlength="50">
-                    <button class="confirm-custom-btn" onclick="addStarCustom()">确定</button>
+                    <input type="text" id="addCustomReason" placeholder="输入原因..." maxlength="50">
                 </div>
+                <div class="star-count-selector">
+                    <p>奖励几颗星？</p>
+                    <div class="count-options">
+                        <button class="count-option selected" data-count="1">1⭐</button>
+                        <button class="count-option" data-count="2">2⭐</button>
+                        <button class="count-option" data-count="3">3⭐</button>
+                    </div>
+                </div>
+                <button class="submit-btn add" onclick="submitAddStar()">
+                    <span>⭐</span> 获得星星！
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- 减少星星弹窗 -->
+    <!-- 失去星星弹窗 -->
     <div class="modal" id="removeModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -167,27 +124,58 @@
             <div class="modal-body">
                 <p class="modal-hint">发生了什么呢？</p>
                 <div class="reason-buttons">
-                    <button class="reason-btn remove" onclick="removeStar('没有按时吃饭')">
+                    <button class="reason-btn remove selected" data-reason="没按时吃饭" onclick="selectReason(this, 'remove')">
                         <span class="reason-icon">🍚</span>
                         <span>没按时吃饭</span>
                     </button>
-                    <button class="reason-btn remove" onclick="removeStar('没有按时睡觉')">
+                    <button class="reason-btn remove" data-reason="没按时睡觉" onclick="selectReason(this, 'remove')">
                         <span class="reason-icon">😴</span>
                         <span>没按时睡觉</span>
                     </button>
-                    <button class="reason-btn remove" onclick="removeStar('没有参加运动')">
+                    <button class="reason-btn remove" data-reason="没参加运动" onclick="selectReason(this, 'remove')">
                         <span class="reason-icon">⚽</span>
                         <span>没参加运动</span>
                     </button>
-                    <button class="reason-btn remove custom-btn" onclick="showCustomReason('remove')">
+                    <button class="reason-btn remove custom-btn" data-reason="custom" onclick="selectReason(this, 'remove')">
                         <span class="reason-icon">📝</span>
                         <span>其他原因</span>
                     </button>
                 </div>
                 <div class="custom-input-area" id="removeCustomArea" style="display: none;">
-                    <input type="text" id="removeCustomReason" placeholder="输入失去星星的原因..." maxlength="50">
-                    <button class="confirm-custom-btn remove" onclick="removeStarCustom()">确定</button>
+                    <input type="text" id="removeCustomReason" placeholder="输入原因..." maxlength="50">
                 </div>
+                <div class="star-count-selector">
+                    <p>扣除几颗星？</p>
+                    <div class="count-options">
+                        <button class="count-option selected" data-count="1">1⭐</button>
+                        <button class="count-option" data-count="2">2⭐</button>
+                        <button class="count-option" data-count="3">3⭐</button>
+                    </div>
+                </div>
+                <button class="submit-btn remove" onclick="submitRemoveStar()">
+                    <span>💔</span> 确认扣除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改星星总数弹窗 -->
+    <div class="modal" id="editTotalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ 修改星星总数</h2>
+                <button class="close-btn" onclick="closeModal('editTotalModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="edit-total-area">
+                    <span class="edit-star">⭐</span>
+                    <input type="number" class="edit-total-input" id="editTotalInput" value="0" min="0" inputmode="numeric" onclick="this.select()">
+                    <span class="edit-unit">颗</span>
+                </div>
+                <p class="edit-hint">直接输入正确的星星数量</p>
+                <button class="submit-btn add" onclick="submitEditTotal()">
+                    <span>✅</span> 确认修改
+                </button>
             </div>
         </div>
     </div>
@@ -204,112 +192,31 @@
                     <button class="filter-btn active" onclick="filterHistory('all')">全部</button>
                     <button class="filter-btn" onclick="filterHistory('add')">获得</button>
                     <button class="filter-btn" onclick="filterHistory('remove')">失去</button>
-                    <button class="filter-btn" onclick="filterHistory('away')">在外</button>
                 </div>
-                <div class="history-list" id="historyList">
-                    <!-- 历史记录将通过JS动态生成 -->
-                </div>
+                <div class="history-list" id="historyList"></div>
             </div>
         </div>
     </div>
 
-    <!-- 同步到黑板弹窗 -->
-    <div class="modal" id="syncModal">
+    <!-- 更多功能面板 -->
+    <div class="modal" id="morePanel">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>✏️ 同步到黑板</h2>
-                <button class="close-btn" onclick="closeModal('syncModal')">✕</button>
+                <h2>⚙️ 更多</h2>
+                <button class="close-btn" onclick="closeModal('morePanel')">✕</button>
             </div>
             <div class="modal-body">
-                <div class="sync-info">
-                    <p>在外期间的星星变化：</p>
-                    <div class="sync-stats">
-                        <div class="sync-stat add">
-                            <span class="sync-icon">➕</span>
-                            <span id="syncAddCount">0</span>
-                            <span>颗新获得</span>
-                        </div>
-                        <div class="sync-stat remove">
-                            <span class="sync-icon">➖</span>
-                            <span id="syncRemoveCount">0</span>
-                            <span>颗失去</span>
-                        </div>
-                    </div>
-                    <div class="sync-details" id="syncDetails">
-                        <!-- 同步详情将通过JS动态生成 -->
-                    </div>
-                </div>
-                <p class="sync-hint">确认后，在外的星星将变为正常颜色</p>
-                <button class="sync-confirm-btn" onclick="syncToBlackboard()">
-                    <span>✅</span> 已抄写到黑板
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 外出快照弹窗 - 出发前同步黑板数据 -->
-    <div class="modal" id="snapshotModal">
-        <div class="modal-content snapshot-modal">
-            <div class="modal-header">
-                <h2>✈️ 出发前同步</h2>
-                <button class="close-btn" onclick="closeModal('snapshotModal')">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="snapshot-content">
-                    <!-- 步骤提示 -->
-                    <div class="sync-steps">
-                        <div class="step-item">
-                            <span class="step-num">1</span>
-                            <span>看一下家里黑板上有多少颗星星</span>
-                        </div>
-                        <div class="step-item">
-                            <span class="step-num">2</span>
-                            <span>在下方输入星星总数</span>
-                        </div>
-                        <div class="step-item">
-                            <span class="step-num">3</span>
-                            <span>点击"开始旅行"即可出发啦！</span>
-                        </div>
-                    </div>
-
-                    <!-- 星星输入卡片 -->
-                    <div class="snapshot-card">
-                        <div class="snapshot-date" id="snapshotDate">2024年1月1日</div>
-                        <div class="blackboard-sync-area">
-                            <div class="sync-label">🏠 黑板上的星星总数</div>
-                            <div class="big-input-area">
-                                <span class="input-star">⭐</span>
-                                <input type="number" 
-                                       class="big-star-input" 
-                                       id="snapshotTotal" 
-                                       value="0" 
-                                       min="0" 
-                                       inputmode="numeric"
-                                       onclick="this.select()"
-                                       onchange="onSnapshotCountChange()"
-                                       onkeyup="onSnapshotCountChange()">
-                                <span class="input-unit">颗</span>
-                            </div>
-                            <div class="current-app-count">
-                                📱 当前APP记录：<span id="currentAppCount">0</span> 颗
-                                <span class="diff-hint" id="diffHint"></span>
-                            </div>
-                        </div>
-
-                        <!-- 最近记录预览 -->
-                        <div class="recent-records-preview">
-                            <h4>📝 最近记录</h4>
-                            <div class="recent-records-list" id="recentRecords">
-                                <!-- 最近记录将通过JS动态生成 -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 开始旅行按钮 -->
-                    <button class="start-travel-btn" onclick="startTravel()">
-                        <span>✈️</span> 开始旅行
+                <div class="more-list">
+                    <button class="more-item" onclick="closeModal('morePanel');exportData()">
+                        <span class="more-icon">💾</span>
+                        <span class="more-text">备份数据</span>
+                        <span class="more-desc">导出数据到文件</span>
                     </button>
-                    <p class="travel-hint">同步后，旅途中获得的星星会用粉色标记</p>
+                    <button class="more-item" onclick="closeModal('morePanel');importData()">
+                        <span class="more-icon">📂</span>
+                        <span class="more-text">恢复数据</span>
+                        <span class="more-desc">从备份文件恢复</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -323,23 +230,14 @@
                 <button class="close-btn" onclick="closeModal('wishListModal')">✕</button>
             </div>
             <div class="modal-body">
-                <!-- 当前星星提示 -->
                 <div class="wish-star-info">
                     <span>⭐</span>
                     <span>当前拥有 <strong id="wishCurrentStars">0</strong> 颗星星</span>
                 </div>
-                
-                <!-- 心愿列表 -->
-                <div class="wish-list" id="wishList">
-                    <!-- 心愿将通过JS动态生成 -->
-                </div>
-                
-                <!-- 添加心愿按钮 -->
+                <div class="wish-list" id="wishList"></div>
                 <button class="add-wish-btn" onclick="showAddWishModal()">
                     <span>✨</span> 许一个新心愿
                 </button>
-                
-                <!-- 查看已实现心愿 -->
                 <button class="view-fulfilled-btn" onclick="showFulfilledWishes()">
                     <span>🏆</span> 已实现的心愿
                 </button>
@@ -395,7 +293,7 @@
             </div>
             <div class="modal-body">
                 <div class="fulfill-content">
-                    <div class="fulfill-wish-name" id="fulfillWishName">去游乐园玩</div>
+                    <div class="fulfill-wish-name" id="fulfillWishName"></div>
                     <div class="fulfill-cost">
                         <span>需要消耗</span>
                         <span class="cost-amount" id="fulfillCost">10</span>
@@ -426,32 +324,22 @@
                 <button class="close-btn" onclick="closeModal('fulfilledWishesModal')">✕</button>
             </div>
             <div class="modal-body">
-                <div class="fulfilled-list" id="fulfilledWishList">
-                    <!-- 已实现心愿将通过JS动态生成 -->
-                </div>
+                <div class="fulfilled-list" id="fulfilledWishList"></div>
             </div>
         </div>
     </div>
 
     <!-- 星星动画容器 -->
     <div class="star-animation-container" id="starAnimationContainer"></div>
-
-    <!-- Toast提示 -->
     <div class="toast" id="toast"></div>
 
-    <script src="app.js?v=6"></script>
-    
-    <!-- 注册 Service Worker -->
+    <script src="app.js?v=10"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
-                    .then(registration => {
-                        console.log('Service Worker 注册成功:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Service Worker 注册失败:', error);
-                    });
+                    .then(r => console.log('SW registered:', r.scope))
+                    .catch(e => console.log('SW failed:', e));
             });
         }
     </script>
